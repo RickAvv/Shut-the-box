@@ -1,4 +1,3 @@
-import os
 import random
 from collections import Counter
 import itertools
@@ -82,8 +81,50 @@ def prob_after_roll(tiles,dice_result,num_dice):
                     proba = prob_choice
             return proba
 
+def choose_and_flip(tiles, combinations):
+    last_len = 9
+    for comb in combinations:
+#choose combination with highest digit
+#        if max(comb) >= last_max:   
+#            last_max = max(comb)
+#            comb_choice = comb
+
+#choose combination whose lowest digit is higher than all the others' lowest digit
+#        if min(comb) >= last_min:  
+#            last_min = min(comb)
+#            comb_choice = comb
+
+#choose combination that minimizes the number of tiles flipped
+#and choose the one with higher numbers
+        if len(comb) < last_len:
+            last_len = len(comb)
+            comb_choice = comb
+    tiles_after = flip_tiles(tiles,comb_choice)
+    return tiles_after
+
+def prob_before_roll_fixed_strat(tiles, numdice):
+    if tiles == []:
+        return 1
+    prob = 0
+    cont = 0
+    for result_prob in r_p[numdice-1]:
+        if tiles == box_start:
+            cont = cont + 1
+            perc = 100/len(r_p[numdice-1])*cont
+            print("%.0f%%" % perc)
+        dice_result = result_prob[0]
+        combinations = [seq for i in range(len(tiles), 0, -1) for seq in itertools.combinations(tiles, i) if sum(seq) == dice_result]
+        if combinations != []:
+            tiles_after = choose_and_flip(tiles, combinations)
+            if sum(tiles_after)> 6:
+                prob = prob + result_prob[1] * prob_before_roll_fixed_strat(tiles_after,2)/(len(die)**numdice)
+            else:
+                prob = prob + result_prob[1] * prob_before_roll_fixed_strat(tiles_after,1)/(len(die)**numdice)
+    return prob 
+
 r_p = [0,0]
 r_p[0] = results_prob(1)
 r_p[1] = results_prob(2)
-prob_shutting = prob_before_roll(box_start,2)*100
-print("Box shut with probability %.2f%%." % prob_shutting)
+#prob_shutting = prob_before_roll(box_start,2)*100
+#print("Box shut with probability %.2f%%." % prob_shutting)
+print(prob_before_roll_fixed_strat(box_start,2))
