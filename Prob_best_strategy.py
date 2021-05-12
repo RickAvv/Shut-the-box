@@ -114,8 +114,8 @@ def choose_and_flip(tiles, dice_result):
         return [tiles,[]]
     for comb in combinations:
 #choose combination with highest digit
-        if greater_than(comb,comb_choice):   
-            comb_choice = comb
+#        if greater_than(comb,comb_choice):   
+#            comb_choice = comb
 
 #choose combination whose lowest digit is higher than all the others' lowest digit
 #        if min(comb) >= last_min:  
@@ -124,10 +124,16 @@ def choose_and_flip(tiles, dice_result):
 
 #choose combination that minimizes the number of tiles flipped
 #and choose the one with higher numbers
-#        if len(comb) < last_len:
-#            last_len = len(comb)
-#            comb_choice = comb
-
+        if len(comb) <= last_len:
+            if len(comb) < last_len:
+                last_len = len(comb)
+                last_min = min(comb)
+                comb_choice = comb
+            else:
+                if min(comb) >= last_min:  
+                    last_min = min(comb)
+                    comb_choice = comb
+                    
     tiles_after = flip_tiles(tiles,comb_choice)
     return [tiles_after, comb_choice]
 
@@ -167,21 +173,21 @@ r_p = [0,0]
 r_p[0] = results_prob(1)
 r_p[1] = results_prob(2)
 
-prob_shutting = prob_before_roll(box_start)*100
-print("Box shut with probability %.2f%%." % prob_shutting)
+#prob_shutting = prob_before_roll(box_start)*100
+#print("Box shut with probability %.2f%%." % prob_shutting)
 #print(prob_before_roll_fixed_strat(box_start))
 
-#all_combinations = [seq for i in range(len(box_start), 0, -1) for seq in itertools.combinations(box_start, i)]
-#for start in all_combinations:
-#    for r in range(1,13):
-#        c1 = choose_and_flip_best(start,r)
-#        c2 = choose_and_flip(start,r)
-#        if c1 != c2:
-#            prob1 = prob_before_roll(c1[0])*100
-#            prob2 = prob_before_roll(c2[0])*100
-#            print("\nYou have ", start, " and rolled ", r,".")
-#            print("If you flip ", c1[1], " then your probability of shutting the box is at most %.2f%%."% prob1)
-#            print("If you flip ", c2[1], " then your probability of shutting the box is at most %.2f%%."% prob2)
+all_combinations = [seq for i in range(len(box_start), 0, -1) for seq in itertools.combinations(box_start, i)]
+for start in all_combinations:
+    for r in range(1,13):
+        c1 = choose_and_flip_best(start,r)
+        c2 = choose_and_flip(start,r)
+        if c1 != c2:
+            prob1 = prob_before_roll(c1[0])*100
+            prob2 = prob_before_roll(c2[0])*100
+            print("\nYou have ", start, " and rolled ", r,".")
+            print("If you flip ", c1[1], " then your probability of shutting the box is at most %.2f%%."% prob1)
+            print("If you flip ", c2[1], " then your probability of shutting the box is at most %.2f%%."% prob2)
 
 #    if prob_before_roll_fixed_strat(start,2) != prob_before_roll(start,2):
 #        print(start)
