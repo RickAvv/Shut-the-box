@@ -54,11 +54,11 @@ def flip_tiles(tiles, comb_choice):
 def calculate_score(box):
     score = 0
     
-    idx = range(len(box)-1, -1, -1)        #"assemble" leftover digits and compose score		
-    for i in range(len(box)-1, -1, -1):        
-        score = score + box[idx[i]]*10**i
+    #idx = range(len(box)-1, -1, -1)        #"assemble" leftover digits and compose score		
+    #for i in range(len(box)-1, -1, -1):        
+    #    score = score + box[idx[i]]*10**i
     
-    #score = sum(box)	#or sum the leftover digits (different score calculation variant)
+    score = sum(box)	#or sum the leftover digits (different score calculation variant)
     
     return score
 
@@ -149,9 +149,7 @@ def greater_than(a,b):
     
 
 def choose_and_flip(tiles, dice_result):
-#    return choose_and_flip_best_prob(tiles, dice_result)
-    return choose_and_flip_best_mean(tiles, dice_result)
-
+    return choose_and_flip_best_mean_prob(tiles, dice_result)
 #    last_min = 0
 #    last_max = 0
 #    last_len = 9
@@ -209,6 +207,30 @@ def mean_before_roll_fixed_strat(tiles):
             print("%.0f%%" % perc)
     return mean
 
+def mean_before_roll_max_prob(tiles):
+    if tiles == []:
+        return 0
+    mean_tiles = calculate_score(tiles)
+    mean = 0
+    cont = 0
+    if sum(tiles)>6:
+        numdice = 2
+    else:
+        numdice = 1
+    for result_prob in r_p[numdice-1]:
+        dice_result = result_prob[0]
+        move = choose_and_flip_best_prob_mean(tiles, dice_result)
+        if move[1] != []:
+            tiles_after = move[0] 
+            mean = mean + result_prob[1] * mean_before_roll_fixed_strat(tiles_after)
+        else:
+            mean = mean + result_prob[1] * mean_tiles
+        if tiles == box_start:
+            cont = cont + 1
+            perc = 100/len(r_p[numdice-1])*cont
+            print("%.0f%%" % perc)
+    return mean
+
 def prob_before_roll_fixed_strat(tiles):
     if tiles == []:
         return 1
@@ -221,6 +243,27 @@ def prob_before_roll_fixed_strat(tiles):
     for result_prob in r_p[numdice-1]:
         dice_result = result_prob[0]
         move = choose_and_flip(tiles, dice_result)
+        if move[1] != []:
+            tiles_after = move[0] 
+            prob = prob + result_prob[1] * prob_before_roll_fixed_strat(tiles_after)
+        if tiles == box_start:
+            cont = cont + 1
+            perc = 100/len(r_p[numdice-1])*cont
+            print("%.0f%%" % perc)
+    return prob
+
+def prob_before_roll_min_mean(tiles):
+    if tiles == []:
+        return 1
+    prob = 0
+    cont = 0
+    if sum(tiles)>6:
+        numdice = 2
+    else:
+        numdice = 1
+    for result_prob in r_p[numdice-1]:
+        dice_result = result_prob[0]
+        move = choose_and_flip_best_mean_prob(tiles, dice_result)
         if move[1] != []:
             tiles_after = move[0] 
             prob = prob + result_prob[1] * prob_before_roll_fixed_strat(tiles_after)
@@ -250,6 +293,37 @@ def choose_and_flip_best_mean(tiles, dice_result):
             comb_choice = comb
             return [tiles_after, comb_choice]
 
+def choose_and_flip_best_mean_prob(tiles, dice_result):
+    prob = 0
+    combinations = [seq for i in range(len(tiles), 0, -1) for seq in itertools.combinations(tiles, i) if sum(seq) == dice_result]
+    if combinations == []:
+        return [tiles,[]]
+    for comb in combinations:
+        tiles_after = flip_tiles(tiles,comb)
+        if mean_before_roll(tiles_after) == mean_after_roll(tiles, dice_result):
+            prob_after = prob_before_roll(tiles_after)
+            if prob_after > prob:
+                comb_choice = comb
+                tiles_after_choice = tiles_after
+                prob = prob_after
+    return [tiles_after_choice, comb_choice]
+
+def choose_and_flip_best_prob_mean(tiles, dice_result):
+    comb_choice = []
+    mean = calculate_score(tiles)
+    combinations = [seq for i in range(len(tiles), 0, -1) for seq in itertools.combinations(tiles, i) if sum(seq) == dice_result]
+    if combinations == []:
+        return [tiles,[]]
+    for comb in combinations:
+        tiles_after = flip_tiles(tiles,comb)
+        if prob_before_roll(tiles_after) == prob_after_roll(tiles, dice_result):
+            mean_after = mean_before_roll(tiles_after)
+            if mean_after < mean:
+                comb_choice = comb
+                tiles_after_choice = tiles_after
+                mean = mean_after
+    return [tiles_after_choice, comb_choice]
+
 
 r_p = [0,0]
 r_p[0] = results_prob(1)
@@ -257,8 +331,8 @@ r_p[1] = results_prob(2)
 
 #average = mean_before_roll(box_start)
 #print("Minimum average score=", average)
-#average_fixed = mean_before_roll_fixed_strat(box_start)
-#print("Average score with chosen strategy=", average_fixed)
-prob_fixed = prob_before_roll_fixed_strat(box_start)*100
-print("Probability of shutting the box using the best strategy for minimum average score: %.2f%%" % prob_fixed)
+average_fixed = mean_before_roll_max_prob(box_start)
+print("Average score with chosen strategy=", average_fixed)
+#prob_fixed = prob_before_roll_min_mean(box_start)*100
+#print("Probability of shutting the box using the best strategy for minimum average score: %.2f%%" % prob_fixed)
 
